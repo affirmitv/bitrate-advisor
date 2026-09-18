@@ -296,8 +296,8 @@ Deno.test("askJev: a stalled connection hits the deadline and advise falls back 
       init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
     })) as unknown as typeof fetch;
   const t0 = Date.now();
-  const a = await advise("start", { platform: "iOS", uplinkProbeKbps: 4200, secondsLive: 0 }, { sessions: 0, scope: "none" }, { apiKey: "test", fetchImpl: stall, timeoutMs: 100 });
+  const a = await advise("start", { platform: "iOS", uplinkProbeKbps: 4200, secondsLive: 0 }, { sessions: 0, scope: "none" }, { apiKey: "test", fetchImpl: stall, timeoutMs: 100, totalBudgetMs: 350 });
   assertEquals(a.source, "policy");
   assert(a.guardrails.some((g) => g.startsWith("jev failed")));
-  assert(Date.now() - t0 < 5000, "fell back within the retry budget");
+  assert(Date.now() - t0 < 1500, "fell back within the total budget, not 4 attempts x timeout");
 });

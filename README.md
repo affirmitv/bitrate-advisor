@@ -75,6 +75,10 @@ const tick = await advise("tick", { ...now, currentRungKbps: 3000, secondsLive: 
 // tick.nextStep "DOWN_1", tick.targetKbps 2000
 ```
 
+Every Jev call carries a per-attempt deadline (`timeoutMs`, 2.5 s) and a total budget across
+retries (`totalBudgetMs`, 5 s); when either runs out the policy answers, so a stalled provider can
+never hold up a go-live.
+
 CLI: `deno task advise start examples/weak-lte-start.json`. Without an API key the same call
 returns the policy's answer with `source: "policy"`, so a client never blocks on the model.
 
