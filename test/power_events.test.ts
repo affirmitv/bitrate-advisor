@@ -8,10 +8,13 @@ const base: Advice = {
   targetKbps: 4500, source: "policy", guardrails: [], latencyMs: 0, state: {},
 };
 
-Deno.test("charging phone keeps everything", () => {
+Deno.test("charging phone keeps everything, unless it is hot or in low power mode", () => {
   const p = projectPower({ batteryPct: 40, charging: true, minutesRemaining: 90, resolution: "1080p60" });
   assertEquals(p.plan, "FULL");
   assertEquals(p.willFinish, true);
+  assertEquals(projectPower({ batteryPct: 40, charging: true, minutesRemaining: 90, thermalState: "serious", resolution: "1080p60" }).plan, "SAVE_RES");
+  assertEquals(projectPower({ batteryPct: 40, charging: true, minutesRemaining: 90, thermalState: "critical", resolution: "1080p60" }).plan, "SAVE_MAX");
+  assertEquals(projectPower({ batteryPct: 40, charging: true, minutesRemaining: 90, lowPowerMode: true, resolution: "1080p60" }).plan, "SAVE_FPS");
 });
 
 Deno.test("measured drain decides the plan", () => {

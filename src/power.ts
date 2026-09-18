@@ -61,15 +61,16 @@ export function projectPower(input: {
   thermalState?: string;
   resolution: Advice["resolution"];
 }): PowerProjection {
+  // Charging settles the BATTERY question only. Thermal and Low Power Mode floors below still
+  // apply: a plugged-in phone at thermal critical must not run 1080p60 (judge finding, PR #1426).
+  const floors = (plan: PowerPlan, reason: string): PowerProjection & { plan: PowerPlan; reason: string } => {
+    if (input.thermalState === "serious") { plan = morePowerConservative(plan, "SAVE_RES"); reason += "; thermal serious"; }
+    if (input.thermalState === "critical") { plan = morePowerConservative(plan, "SAVE_MAX"); reason += "; thermal critical"; }
+    if (input.lowPowerMode) { plan = morePowerConservative(plan, "SAVE_FPS"); reason += "; low power mode"; }
+    return { minutesToEmpty: null, minutesRemaining: input.minutesRemaining, willFinish: true, marginMin: null, plan, reason };
+  };
   if (input.charging) {
-    return {
-      minutesToEmpty: null,
-      minutesRemaining: input.minutesRemaining,
-      willFinish: true,
-      marginMin: null,
-      plan: "FULL",
-      reason: "charging",
-    };
+    return floors("FULL", "charging");
   }
   const measured = input.drainPctPerMin;
   const drain = measured ?? ASSUMED_DRAIN[input.resolution];
