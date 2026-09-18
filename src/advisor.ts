@@ -9,13 +9,14 @@ export type Rung = { kbps: number; label: string };
 
 /** Default bitrate ladder. */
 export const DEFAULT_LADDER: Rung[] = [
+  { kbps: 400, label: "360p-class, the floor for a bad cellular link" },
   { kbps: 800, label: "480p-class" },
   { kbps: 1200, label: "540p-class" },
   { kbps: 2000, label: "720p-class" },
-  { kbps: 3000, label: "720p60-class" },
+  { kbps: 3000, label: "720p high / 1080p low" },
   { kbps: 4500, label: "1080p-class" },
-  { kbps: 6000, label: "1080p-high-class" },
-  { kbps: 8000, label: "1080p-max-class" },
+  { kbps: 6000, label: "1080p high" },
+  { kbps: 8000, label: "1080p60-class" },
 ];
 
 /** What the client measures right now. */
@@ -262,6 +263,11 @@ export function policyAdvice(
     mode === "start"
       ? rungAtOrBelow(cap, ladder)
       : rungAtOrBelow(t.currentRungKbps ?? ladder[0].kbps, ladder);
+  if (mode === "start" && cap < ladder[0].kbps) {
+    // The measured link cannot carry even the lowest rung. Start at the floor anyway (the
+    // encoder has nothing lower) and say so, so the client can warn the streamer up front.
+    guards.push(`measured uplink allows ${Math.round(cap)} kbps, below the ${ladder[0].kbps} kbps floor; starting at the floor and expecting stalls`);
+  }
 
   const ceilingCaps: number[] = [8000];
   if (t.uplinkProbeKbps !== undefined)

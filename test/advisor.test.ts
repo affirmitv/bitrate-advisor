@@ -273,3 +273,10 @@ Deno.test("buildState omits undefined fields, keeps last 6 actions", () => {
   assert(!("batteryPct" in state.session));
   assertEquals(state.recent_actions, ["b", "c", "d", "e", "f", "g"]);
 });
+
+Deno.test("policyAdvice below the ladder floor starts at the floor and says so", () => {
+  const a = policyAdvice("start", { platform: "iOS", uplinkProbeKbps: 500, secondsLive: 0 }, { sessions: 0, scope: "none" }, DEFAULT_LADDER, 0.7);
+  assertEquals(a.initialKbps, 400);
+  assertEquals(a.resolution, "720p30");
+  assert(a.guardrails.some((g) => g.includes("below the 400 kbps floor")), a.guardrails.join(" | "));
+});

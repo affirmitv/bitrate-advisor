@@ -35,7 +35,7 @@ telemetry + history ──▶ state ──▶ Jev (one request, three heads) ─
 
 | Question | Choices | When |
 |---|---|---|
-| `initial_bitrate_kbps` | the ladder (800 … 8000 by default) | start |
+| `initial_bitrate_kbps` | the ladder (400 … 8000 by default) | start |
 | `ceiling_kbps` | the ladder | start |
 | `resolution` | 720p30, 1080p30, 1080p60 | start and tick |
 | `next_step` | DOWN_1, HOLD, UP_1 | tick |
@@ -83,7 +83,8 @@ returns the policy's answer with `source: "policy"`, so a client never blocks on
 The policy is the safety envelope and Jev may only match it or be more conservative.
 
 - Cap = min(uplink probe × headroom (0.7), history p10 × 1.1, 3000 when nothing is known).
-  The starting rung and every target sit at or below it.
+  The starting rung and every target sit at or below it. A link that cannot carry the 400 kbps
+  floor starts at the floor with a guardrail sentence saying stalls are expected.
 - Ceiling = min(probe × headroom, history p50).
 - A tick moves at most one rung. UP_1 needs 60 clean seconds (loss < 0.5%, queue < 200 ms,
   dropped < 0.5%). DOWN_1 is forced at loss > 2%, queue > 1 s or dropped frames > 3%.

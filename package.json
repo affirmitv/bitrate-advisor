@@ -1,6 +1,6 @@
 {
   "name": "@affirmi/bitrate-advisor",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Live-stream encoder settings from telemetry and history: a Jev decision model inside a deterministic safety envelope.",
   "type": "module",
   "main": "./mod.ts",
