@@ -24,6 +24,11 @@ export type Telemetry = {
   deviceModel?: string;
   appVersion?: string;
   batteryPct?: number;
+  charging?: boolean;
+  /** Measured battery drain while streaming, percent per minute (positive = draining). */
+  batteryDrainPctPerMin?: number;
+  /** Minutes of game left to stream; unlocks the power plan. */
+  minutesRemaining?: number;
   lowPowerMode?: boolean;
   thermalState?: "nominal" | "fair" | "serious" | "critical";
   networkType?: "wifi" | "cellular" | "ethernet" | "unknown";
@@ -93,6 +98,8 @@ export type SessionSummary = {
 };
 
 /** Raised when Jev returns an invalid or unusable answer. */
+import { applyPowerPlan, morePowerConservative, powerQuestion, projectPower, type PowerPlan, type AdviceWithPower } from "./power.ts";
+
 export class JevError extends Error {
   constructor(message: string) {
     super(message);
@@ -151,6 +158,7 @@ export function buildState(t: Telemetry, h: History): object {
     measured_now: measured,
     history,
     recent_actions: (t.recentActions ?? []).slice(-6),
+    ...(t.minutesRemaining !== undefined && { game: { minutes_remaining: t.minutesRemaining } }),
   };
 }
 
@@ -158,7 +166,7 @@ export function buildState(t: Telemetry, h: History): object {
 export function buildQuestions(
   mode: "start" | "tick",
   ladder: Rung[],
-  _t: Telemetry
+  t: Telemetry
 ): Record<string, unknown> {
   const goal = {
     goal:
@@ -212,6 +220,12 @@ export function buildQuestions(
       meaning: "Choose the output resolution and frame rate.",
     },
   };
+  if (t.batteryPct !== undefined && t.minutesRemaining !== undefined) {
+    q.power_plan = powerQuestion({
+      batteryPct: t.batteryPct, charging: t.charging, lowPowerMode: t.lowPowerMode,
+      drainPctPerMin: t.batteryDrainPctPerMin, minutesRemaining: t.minutesRemaining, thermalState: t.thermalState,
+    });
+  }
   return q;
 }
 
@@ -236,12 +250,13 @@ export function policyAdvice(
   headroom: number
 ): Advice {
   const guards: string[] = [];
-  const caps: number[] = [3000];
+  const caps: number[] = [];
   if (t.uplinkProbeKbps !== undefined)
     caps.push(t.uplinkProbeKbps * headroom);
   if (h.sustainedUplinkKbpsP10 !== undefined)
     caps.push(h.sustainedUplinkKbpsP10 * 1.1);
-  const cap = Math.min(...caps);
+  // Nothing measured and no history: 3000 kbps is the blind default.
+  const cap = caps.length > 0 ? Math.min(...caps) : 3000;
 
   const initial =
     mode === "start"
@@ -496,7 +511,7 @@ export async function advise(
     base.guardrails.push("no api key: policy only");
     base.latencyMs = now() - started;
     base.state = buildState(t, h);
-    return base;
+    return withPowerPlan(base, t);
   }
 
   const state = buildState(t, h);
@@ -557,7 +572,8 @@ export async function advise(
       latencyMs,
       state,
     };
-    return applyGuardrails(advice, t, h, ladder, headroom);
+    const guarded = applyGuardrails(advice, t, h, ladder, headroom);
+    return withPowerPlan(guarded, t, answers["power_plan"]?.choice);
   } catch (e) {
     const base = policyAdvice(mode, t, h, ladder, headroom);
     base.guardrails.push(
@@ -565,8 +581,28 @@ export async function advise(
     );
     base.latencyMs = now() - started;
     base.state = state;
-    return base;
+    return withPowerPlan(base, t);
   }
+}
+
+/** Battery and thermal plan: the deterministic projection, made more conservative by Jev's
+ * `power_plan` answer when one came back, never less. No-op without battery and game-clock data. */
+export function withPowerPlan(advice: Advice, t: Telemetry, jevPlan?: string): AdviceWithPower {
+  if (t.batteryPct === undefined || t.minutesRemaining === undefined) return advice;
+  const projection = projectPower({
+    batteryPct: t.batteryPct, charging: t.charging, lowPowerMode: t.lowPowerMode,
+    drainPctPerMin: t.batteryDrainPctPerMin, minutesRemaining: t.minutesRemaining,
+    thermalState: t.thermalState, resolution: advice.resolution,
+  });
+  let plan: PowerPlan = projection.plan;
+  let reason = projection.reason;
+  const valid: PowerPlan[] = ["FULL", "SAVE_FPS", "SAVE_RES", "SAVE_MAX", "PLUG_IN"];
+  if (jevPlan && (valid as string[]).includes(jevPlan)) {
+    const merged = morePowerConservative(plan, jevPlan as PowerPlan);
+    if (merged !== plan) reason = `Jev chose ${jevPlan} over the projection's ${plan} (${reason})`;
+    plan = merged;
+  }
+  return applyPowerPlan(advice, plan, reason, projection);
 }
 
 /** Aggregate past session summaries into a History prior. */

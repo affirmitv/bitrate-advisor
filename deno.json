@@ -1,10 +1,10 @@
 {
   "name": "@affirmi/bitrate-advisor",
   "version": "0.1.0",
-  "exports": "./src/advisor.ts",
+  "exports": "./mod.ts",
   "tasks": {
     "test": "deno test test/",
-    "check": "deno check src/advisor.ts cli.ts",
+    "check": "deno check mod.ts cli.ts",
     "advise": "deno run --allow-net --allow-env cli.ts"
   },
   "license": "MIT"

@@ -97,7 +97,7 @@ Deno.test("policyAdvice start: weak link clamps to 2000/720p30", () => {
   assertEquals(a.maxKbps, 2000); // highest rung <= min(2940, p50 3100)
 });
 
-Deno.test("policyAdvice start: strong link takes 3000 initial, 8000 ceiling", () => {
+Deno.test("policyAdvice start: strong link takes 8000 initial and ceiling", () => {
   const t: Telemetry = {
     platform: "ios",
     uplinkProbeKbps: 41000,
@@ -107,9 +107,9 @@ Deno.test("policyAdvice start: strong link takes 3000 initial, 8000 ceiling", ()
   };
   const h: History = { sessions: 5, scope: "global", sustainedUplinkKbpsP50: 24000, sustainedUplinkKbpsP10: 9000 };
   const a = policyAdvice("start", t, h, DEFAULT_LADDER, 0.7);
-  assertEquals(a.initialKbps, 3000); // cap = min(3000, 28700, 9900)
+  assertEquals(a.initialKbps, 8000); // cap = min(28700, 9900) -> highest rung 8000
   assertEquals(a.maxKbps, 8000); // min(8000, 28700, 24000)
-  assertEquals(a.resolution, "1080p30"); // target 3000 < 4500, throttle rate 0
+  assertEquals(a.resolution, "1080p60"); // target 8000 >= 4500, nominal, battery 92, throttle rate 0
 });
 
 Deno.test("policyAdvice tick: degraded metrics force DOWN_1", () => {

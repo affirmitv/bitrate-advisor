@@ -1,12 +1,23 @@
 {
   "name": "@affirmi/bitrate-advisor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Live-stream encoder settings from telemetry and history: a Jev decision model inside a deterministic safety envelope.",
   "type": "module",
-  "main": "./src/advisor.ts",
-  "types": "./src/advisor.ts",
+  "main": "./mod.ts",
+  "types": "./mod.ts",
   "license": "MIT",
   "repository": "github:affirmitv/bitrate-advisor",
-  "engines": { "node": ">=20" },
-  "keywords": ["live streaming", "bitrate", "abr", "rtmp", "jev", "typesafe", "openrouter", "encoder"]
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "live streaming",
+    "bitrate",
+    "abr",
+    "rtmp",
+    "jev",
+    "typesafe",
+    "openrouter",
+    "encoder"
+  ]
 }

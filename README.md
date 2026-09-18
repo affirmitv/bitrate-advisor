@@ -54,10 +54,10 @@ At one decision every 10 seconds that is about **$0.015 per hour of stream**.
 
 ## Use it
 
-Deno, Node 20+ or an edge runtime; no dependencies; the only network call is to Jev.
+Deno, Node 20+ or an edge runtime; no dependencies; the only network call is to Jev. Import `mod.ts`.
 
 ```ts
-import { advise, aggregateHistory } from "./src/advisor.ts";
+import { advise, aggregateHistory } from "./mod.ts";
 
 const history = aggregateHistory(pastSessions, { venueId, carrierAsn, deviceModel });
 
@@ -93,6 +93,42 @@ The policy is the safety envelope and Jev may only match it or be more conservat
 Inside that envelope Jev decides earlier and with more context than a buffer heuristic: it sees
 that this venue on this carrier stalls above 3.5 Mbps two times out of five, that this phone model
 throttles at 1080p60, that the send queue has been climbing for three ticks.
+
+## Battery and thermal: finish the game
+
+A stream that stalls is bad; a phone that dies in the fourth quarter is worse. Give the advisor
+the battery level, whether it is charging, the measured drain (percent per minute, from two
+battery readings a few minutes apart) and the minutes left in the game, and it adds a power plan:
+
+| Plan | What changes |
+|---|---|
+| `FULL` | nothing, the phone will finish with margin |
+| `SAVE_FPS` | 1080p60 becomes 1080p30 |
+| `SAVE_RES` | drop to 720p30 |
+| `SAVE_MAX` | 720p30 and the bitrate capped at 2000 kbps |
+| `PLUG_IN` | it will not finish even at the floor: tell the streamer now, not at 3% |
+
+The projection is deterministic (`projectPower`, with a 5% reserve; serious thermal forces at
+least `SAVE_RES`, critical forces `SAVE_MAX`, Low Power Mode at least `SAVE_FPS`). Jev answers the
+same question with the whole state in view and may only make the plan more conservative. The
+result rides on the advice as `advice.power` and one more guardrail sentence.
+
+## Events, not just ticks
+
+`EventAdvisor` reacts the moment something happens instead of waiting for the next timer:
+
+```ts
+import { EventAdvisor } from "./mod.ts";
+const ev = new EventAdvisor({ apiKey });
+// urgent: disconnect, thermal_change, battery_low, network_change, dropped_frames_spike,
+// send_queue_growing react immediately; the rest are debounced (3 s); ticks are throttled (5 s)
+const advice = await ev.onEvent({ type: "thermal_change", atMs: Date.now(), detail: "fair -> serious" }, telemetry, history);
+// or derive events from two consecutive telemetry samples
+for (const e of EventAdvisor.eventsFromDelta(previous, current, Date.now())) await ev.onEvent(e, current, history);
+```
+
+Every event line lands in `recent_actions`, so Jev sees "t+412s thermal_change: fair -> serious"
+right above the numbers.
 
 ## History
 
