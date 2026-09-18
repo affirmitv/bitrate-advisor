@@ -289,3 +289,15 @@ Deno.test("policyAdvice never returns a ceiling below the starting rung", () => 
   assertEquals(a.initialKbps, 2000);
   assertEquals(a.maxKbps, 2000);
 });
+
+Deno.test("askJev: a stalled connection hits the deadline and advise falls back to the policy", async () => {
+  const stall = ((_u: unknown, init: RequestInit) =>
+    new Promise<Response>((_, reject) => {
+      init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+    })) as unknown as typeof fetch;
+  const t0 = Date.now();
+  const a = await advise("start", { platform: "iOS", uplinkProbeKbps: 4200, secondsLive: 0 }, { sessions: 0, scope: "none" }, { apiKey: "test", fetchImpl: stall, timeoutMs: 100 });
+  assertEquals(a.source, "policy");
+  assert(a.guardrails.some((g) => g.startsWith("jev failed")));
+  assert(Date.now() - t0 < 5000, "fell back within the retry budget");
+});

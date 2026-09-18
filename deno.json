@@ -1,6 +1,6 @@
 {
   "name": "@affirmi/bitrate-advisor",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "exports": "./mod.ts",
   "tasks": {
     "test": "deno test test/",

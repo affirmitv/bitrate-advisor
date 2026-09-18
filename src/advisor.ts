@@ -84,6 +84,8 @@ export type AdvisorOptions = {
   /** Never target above uplinkProbe * headroom. Default 0.7. */
   headroom?: number;
   fetchImpl?: typeof fetch;
+  /** Per-attempt deadline for the Jev call; a stalled connection falls back to the policy. Default 4000 ms. */
+  timeoutMs?: number;
   now?: () => number;
 };
 
@@ -468,6 +470,8 @@ export async function askJev(
   let lastErr: unknown;
   for (let attempt = 0; attempt <= 3; attempt++) {
     try {
+      // A deadline per attempt: an accepted-but-stalled connection must reach the deterministic
+      // fallback before a client's own Go Live budget runs out (judge finding, PR #1426).
       const res = await f(url, {
         method: "POST",
         headers: {
@@ -475,6 +479,7 @@ export async function askJev(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ model, state, questions }),
+        signal: AbortSignal.timeout(opts.timeoutMs ?? 4000),
       });
       if (res.status === 429 || res.status >= 500) {
         lastErr = new JevError(`retryable status ${res.status}`);
