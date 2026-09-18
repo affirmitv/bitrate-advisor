@@ -158,7 +158,7 @@ Deno.test("applyGuardrails start: jev 4500 clamped to 2000 with three sentences"
   };
   const out = applyGuardrails(jev, WEAK_TELEMETRY, STRONG_HISTORY, DEFAULT_LADDER, 0.7);
   assertEquals(out.initialKbps, 2000);
-  assertEquals(out.minKbps, 1200);
+  assertEquals(out.minKbps, 400);
   assertEquals(out.maxKbps, 2000);
   assertEquals(out.resolution, "720p30");
   assertEquals(out.guardrails.length, 3);

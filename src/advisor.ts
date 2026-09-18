@@ -323,7 +323,7 @@ export function policyAdvice(
   return {
     mode,
     initialKbps: initial.kbps,
-    minKbps: mode === "start" ? ladder[0].kbps : initial.kbps,
+    minKbps: ladder[0].kbps,
     maxKbps: ceiling.kbps,
     resolution,
     nextStep,
@@ -415,7 +415,10 @@ export function applyGuardrails(
     // allow from here, never below the rung we are stepping to.
     maxKbps = Math.max(policy.maxKbps, targetKbps);
   }
-  const minKbps = advice.mode === "start" ? rungBelow(initialKbps, ladder) : ladder[0].kbps;
+  // The minimum is always the ladder floor: it is the room the encoder's own auto-bitrate has
+  // to descend when the link collapses mid-game, not a quality promise. Pinning it one rung
+  // under the start would strand a 3000 kbps start above a link that fell to 1000 kbps.
+  const minKbps = policy.minKbps;
   return { ...advice, initialKbps, minKbps, maxKbps, resolution, nextStep, targetKbps, guardrails: guards };
 }
 
