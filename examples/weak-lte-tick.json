@@ -1,0 +1,10 @@
+{
+  "telemetry": {
+    "platform": "iOS 19", "deviceModel": "iPhone14", "batteryPct": 31, "thermalState": "fair",
+    "networkType": "cellular", "carrierAsn": "AS21928", "venueId": "foothill-ms-gym",
+    "uplinkProbeKbps": 2600, "rttMs": 140, "jitterMs": 45, "packetLossPct": 2.1,
+    "encoderKbps": 3000, "currentRungKbps": 3000, "droppedFramesPct": 6.5, "sendQueueMs": 1800,
+    "secondsLive": 410, "recentActions": ["HOLD 3000", "HOLD 3000", "dropped frames rising"]
+  },
+  "history": {"sessions": 7, "sustainedUplinkKbpsP50": 3100, "sustainedUplinkKbpsP10": 1900, "scope": "venue+asn"}
+}

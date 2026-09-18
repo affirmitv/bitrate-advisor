@@ -1,0 +1,16 @@
+{
+  "telemetry": {
+    "platform": "iOS 19", "deviceModel": "iPhone14", "batteryPct": 35, "thermalState": "fair",
+    "networkType": "cellular", "carrierAsn": "AS21928", "venueId": "foothill-ms-gym",
+    "uplinkProbeKbps": 4200, "rttMs": 62, "jitterMs": 18, "packetLossPct": 0.4, "secondsLive": 0
+  },
+  "sessions": [
+    {"venueId": "foothill-ms-gym", "carrierAsn": "AS21928", "deviceModel": "iPhone14", "sustainedUplinkKbps": 1900, "stalledAtOrAboveKbps": 3500, "usedResolution": "1080p30"},
+    {"venueId": "foothill-ms-gym", "carrierAsn": "AS21928", "deviceModel": "iPhone14", "sustainedUplinkKbps": 2400, "stalledAtOrAboveKbps": null, "usedResolution": "1080p30"},
+    {"venueId": "foothill-ms-gym", "carrierAsn": "AS21928", "deviceModel": "iPhone14", "sustainedUplinkKbps": 3100, "stalledAtOrAboveKbps": 3500, "usedResolution": "1080p30"},
+    {"venueId": "foothill-ms-gym", "carrierAsn": "AS21928", "deviceModel": "iPhone14", "sustainedUplinkKbps": 3300, "stalledAtOrAboveKbps": null, "usedResolution": "1080p30"},
+    {"venueId": "foothill-ms-gym", "carrierAsn": "AS21928", "deviceModel": "iPhone14", "sustainedUplinkKbps": 2800, "stalledAtOrAboveKbps": 3500, "usedResolution": "1080p30"},
+    {"venueId": "foothill-ms-gym", "carrierAsn": "AS21928", "deviceModel": "iPhone14", "sustainedUplinkKbps": 3600, "stalledAtOrAboveKbps": null, "usedResolution": "1080p30"},
+    {"venueId": "foothill-ms-gym", "carrierAsn": "AS21928", "deviceModel": "iPhone14", "sustainedUplinkKbps": 4100, "stalledAtOrAboveKbps": null, "usedResolution": "1080p30"}
+  ]
+}
