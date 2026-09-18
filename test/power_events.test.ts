@@ -45,7 +45,9 @@ Deno.test("applyPowerPlan lowers settings and explains itself", () => {
 Deno.test("withPowerPlan: Jev may only be more conservative than the projection", () => {
   const t: Telemetry = { platform: "iOS", batteryPct: 80, batteryDrainPctPerMin: 0.7, minutesRemaining: 60, secondsLive: 0 };
   assertEquals(withPowerPlan(base, t, "FULL").power?.plan, "FULL");
-  assertEquals(withPowerPlan(base, t, "SAVE_RES").power?.plan, "SAVE_RES");
+  assertEquals(withPowerPlan(base, t, "SAVE_FPS").power?.plan, "SAVE_FPS");
+  assertEquals(withPowerPlan(base, t, "SAVE_RES").power?.plan, "SAVE_FPS"); // one step at most
+  assertEquals(withPowerPlan(base, t, "PLUG_IN").power?.plan, "SAVE_FPS"); // never PLUG_IN when the battery will finish
   const tight: Telemetry = { ...t, batteryPct: 30, batteryDrainPctPerMin: 1.5 };
   const p = withPowerPlan(base, tight, "FULL").power?.plan;
   assert(p === "SAVE_MAX" || p === "PLUG_IN", String(p));

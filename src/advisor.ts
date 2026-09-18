@@ -596,11 +596,16 @@ export function withPowerPlan(advice: Advice, t: Telemetry, jevPlan?: string): A
   });
   let plan: PowerPlan = projection.plan;
   let reason = projection.reason;
-  const valid: PowerPlan[] = ["FULL", "SAVE_FPS", "SAVE_RES", "SAVE_MAX", "PLUG_IN"];
-  if (jevPlan && (valid as string[]).includes(jevPlan)) {
+  const order: PowerPlan[] = ["FULL", "SAVE_FPS", "SAVE_RES", "SAVE_MAX", "PLUG_IN"];
+  if (jevPlan && (order as string[]).includes(jevPlan)) {
+    // Jev may tighten the plan by ONE step over the projection (it sees the whole state), but
+    // PLUG_IN is a message to a human and is only allowed when the projection itself says the
+    // battery will not finish the game.
     const merged = morePowerConservative(plan, jevPlan as PowerPlan);
-    if (merged !== plan) reason = `Jev chose ${jevPlan} over the projection's ${plan} (${reason})`;
-    plan = merged;
+    const capped = order[Math.min(order.indexOf(merged), order.indexOf(plan) + 1)];
+    const final = capped === "PLUG_IN" && projection.willFinish ? "SAVE_MAX" : capped;
+    if (final !== plan) reason = `Jev tightened ${plan} to ${final} (${reason})`;
+    plan = final;
   }
   return applyPowerPlan(advice, plan, reason, projection);
 }
