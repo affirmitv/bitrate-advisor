@@ -280,3 +280,12 @@ Deno.test("policyAdvice below the ladder floor starts at the floor and says so",
   assertEquals(a.resolution, "720p30");
   assert(a.guardrails.some((g) => g.includes("below the 400 kbps floor")), a.guardrails.join(" | "));
 });
+
+Deno.test("policyAdvice never returns a ceiling below the starting rung", () => {
+  // three sessions around 1900 kbps: p10 * 1.1 = 2090 -> start 2000, p50 = 1900 -> ceiling rung 1200 unless fixed
+  const h = { sessions: 3, sustainedUplinkKbpsP50: 1900, sustainedUplinkKbpsP10: 1900, scope: "venue+asn" as const };
+  const a = policyAdvice("start", { platform: "iOS", uplinkProbeKbps: 4200, secondsLive: 0 }, h, DEFAULT_LADDER, 0.7);
+  assert(a.minKbps <= a.initialKbps && a.initialKbps <= a.maxKbps, `${a.minKbps} <= ${a.initialKbps} <= ${a.maxKbps}`);
+  assertEquals(a.initialKbps, 2000);
+  assertEquals(a.maxKbps, 2000);
+});

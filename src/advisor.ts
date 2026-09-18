@@ -275,7 +275,13 @@ export function policyAdvice(
   if (h.sustainedUplinkKbpsP50 !== undefined)
     ceilingCaps.push(h.sustainedUplinkKbpsP50);
   const ceilingKbps = Math.min(...ceilingCaps);
-  const ceiling = rungAtOrBelow(ceilingKbps, ladder);
+  let ceiling = rungAtOrBelow(ceilingKbps, ladder);
+  // The envelope must stay ordered. History's median can sit below the cap (p10 × 1.1 lets the
+  // start rung sit above p50), which would hand the encoder a ceiling under its starting rung.
+  if (ceiling.kbps < initial.kbps) {
+    guards.push(`ceiling ${ceiling.kbps} kbps raised to the starting rung ${initial.kbps} kbps to keep min <= initial <= max`);
+    ceiling = initial;
+  }
 
   let nextStep: Advice["nextStep"] = "HOLD";
   let target = initial;
