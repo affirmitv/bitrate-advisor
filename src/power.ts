@@ -163,14 +163,18 @@ export function applyPowerPlan(
   let initialKbps = advice.initialKbps;
   let maxKbps = advice.maxKbps;
   let targetKbps = advice.targetKbps;
+  let minKbps = advice.minKbps;
   if (plan === "SAVE_MAX" || plan === "PLUG_IN") {
     initialKbps = Math.min(initialKbps, 2000);
     maxKbps = Math.min(maxKbps, 2000);
     targetKbps = Math.min(targetKbps, 2000);
   }
+  // The envelope must stay ordered (min <= initial <= max) or the encoder rejects it whole.
+  if (minKbps > initialKbps) minKbps = Math.min(initialKbps, 1200);
+  if (maxKbps < initialKbps) maxKbps = initialKbps;
   const changed = resolution !== advice.resolution || maxKbps !== advice.maxKbps || targetKbps !== advice.targetKbps;
   const guardrails = plan === "FULL" && !changed
     ? advice.guardrails
     : [...advice.guardrails, `power plan ${plan}: ${reason}`];
-  return { ...advice, resolution, initialKbps, maxKbps, targetKbps, guardrails, power: { plan, reason, projection } };
+  return { ...advice, resolution, initialKbps, minKbps, maxKbps, targetKbps, guardrails, power: { plan, reason, projection } };
 }

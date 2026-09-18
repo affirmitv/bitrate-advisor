@@ -36,6 +36,7 @@ Deno.test("applyPowerPlan lowers settings and explains itself", () => {
   assertEquals(a.resolution, "720p30");
   assertEquals(a.maxKbps, 2000);
   assertEquals(a.targetKbps, 2000);
+  assert(a.minKbps <= a.initialKbps && a.initialKbps <= a.maxKbps, "envelope stays ordered");
   assert(a.guardrails[a.guardrails.length - 1].startsWith("power plan SAVE_MAX"));
   const full = applyPowerPlan(base, "FULL", "47 min of margin");
   assertEquals(full.guardrails.length, 0);
