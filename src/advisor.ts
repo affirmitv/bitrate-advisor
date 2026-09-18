@@ -340,11 +340,14 @@ export function applyGuardrails(
     initialKbps = policy.initialKbps;
   }
 
-  let maxKbps = Math.min(advice.maxKbps, policy.maxKbps);
-  if (maxKbps < advice.maxKbps) {
-    guards.push(`ceiling ${advice.maxKbps} kbps lowered to ${maxKbps} kbps (probe and history)`);
+  let maxKbps = advice.maxKbps;
+  if (advice.mode === "start") {
+    maxKbps = Math.min(advice.maxKbps, policy.maxKbps);
+    if (maxKbps < advice.maxKbps) {
+      guards.push(`ceiling ${advice.maxKbps} kbps lowered to ${maxKbps} kbps (probe and history)`);
+    }
+    if (maxKbps < initialKbps) maxKbps = initialKbps;
   }
-  if (maxKbps < initialKbps) maxKbps = initialKbps;
 
   let nextStep = advice.nextStep;
   if (advice.mode === "tick") {
@@ -380,6 +383,11 @@ export function applyGuardrails(
     resolution = policy.resolution;
   }
 
+  if (advice.mode === "tick") {
+    // While live the envelope is the running session's; report the ceiling the policy would
+    // allow from here, never below the rung we are stepping to.
+    maxKbps = Math.max(policy.maxKbps, targetKbps);
+  }
   const minKbps = advice.mode === "start" ? rungBelow(initialKbps, ladder) : ladder[0].kbps;
   return { ...advice, initialKbps, minKbps, maxKbps, resolution, nextStep, targetKbps, guardrails: guards };
 }
